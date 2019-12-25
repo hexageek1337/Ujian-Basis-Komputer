@@ -1,315 +1,338 @@
-<?php
-/**
- * CodeIgniter
- *
- * An open source application development framework for PHP
- *
- * This content is released under the MIT License (MIT)
- *
- * Copyright (c) 2014 - 2018, British Columbia Institute of Technology
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- * @package	CodeIgniter
- * @author	EllisLab Dev Team
- * @copyright	Copyright (c) 2008 - 2014, EllisLab, Inc. (https://ellislab.com/)
- * @copyright	Copyright (c) 2014 - 2018, British Columbia Institute of Technology (http://bcit.ca/)
- * @license	http://opensource.org/licenses/MIT	MIT License
- * @link	https://codeigniter.com
- * @since	Version 1.0.0
- * @filesource
- */
-
-/*
- *---------------------------------------------------------------
- * APPLICATION ENVIRONMENT
- *---------------------------------------------------------------
- *
- * You can load different configurations depending on your
- * current environment. Setting the environment also influences
- * things like logging and error reporting.
- *
- * This can be set to anything, but default usage is:
- *
- *     development
- *     testing
- *     production
- *
- * NOTE: If you change these, also change the error_reporting() code below
- */
-	define('ENVIRONMENT', isset($_SERVER['CI_ENV']) ? $_SERVER['CI_ENV'] : 'development');
-
-/*
- *---------------------------------------------------------------
- * ERROR REPORTING
- *---------------------------------------------------------------
- *
- * Different environments will require different levels of error reporting.
- * By default development will show errors but testing and live will hide them.
- */
-switch (ENVIRONMENT)
-{
-	case 'development':
-		error_reporting(-1);
-		ini_set('display_errors', 1);
-	break;
-
-	case 'testing':
-	case 'production':
-		ini_set('display_errors', 0);
-		if (version_compare(PHP_VERSION, '5.3', '>='))
-		{
-			error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT & ~E_USER_NOTICE & ~E_USER_DEPRECATED);
-		}
-		else
-		{
-			error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_USER_NOTICE);
-		}
-	break;
-
-	default:
-		header('HTTP/1.1 503 Service Unavailable.', TRUE, 503);
-		echo 'The application environment is not set correctly.';
-		exit(1); // EXIT_ERROR
-}
-
-/*
- *---------------------------------------------------------------
- * SYSTEM DIRECTORY NAME
- *---------------------------------------------------------------
- *
- * This variable must contain the name of your "system" directory.
- * Set the path if it is not in the same directory as this file.
- */
-	$system_path = 'system';
-
-/*
- *---------------------------------------------------------------
- * APPLICATION DIRECTORY NAME
- *---------------------------------------------------------------
- *
- * If you want this front controller to use a different "application"
- * directory than the default one you can set its name here. The directory
- * can also be renamed or relocated anywhere on your server. If you do,
- * use an absolute (full) server path.
- * For more info please see the user guide:
- *
- * https://codeigniter.com/user_guide/general/managing_apps.html
- *
- * NO TRAILING SLASH!
- */
-	$application_folder = 'application';
-
-/*
- *---------------------------------------------------------------
- * VIEW DIRECTORY NAME
- *---------------------------------------------------------------
- *
- * If you want to move the view directory out of the application
- * directory, set the path to it here. The directory can be renamed
- * and relocated anywhere on your server. If blank, it will default
- * to the standard location inside your application directory.
- * If you do move this, use an absolute (full) server path.
- *
- * NO TRAILING SLASH!
- */
-	$view_folder = '';
-
-
-/*
- * --------------------------------------------------------------------
- * DEFAULT CONTROLLER
- * --------------------------------------------------------------------
- *
- * Normally you will set your default controller in the routes.php file.
- * You can, however, force a custom routing by hard-coding a
- * specific controller class/function here. For most applications, you
- * WILL NOT set your routing here, but it's an option for those
- * special instances where you might want to override the standard
- * routing in a specific front controller that shares a common CI installation.
- *
- * IMPORTANT: If you set the routing here, NO OTHER controller will be
- * callable. In essence, this preference limits your application to ONE
- * specific controller. Leave the function name blank if you need
- * to call functions dynamically via the URI.
- *
- * Un-comment the $routing array below to use this feature
- */
-	// The directory name, relative to the "controllers" directory.  Leave blank
-	// if your controller is not in a sub-directory within the "controllers" one
-	// $routing['directory'] = '';
-
-	// The controller class file name.  Example:  mycontroller
-	// $routing['controller'] = '';
-
-	// The controller function you wish to be called.
-	// $routing['function']	= '';
-
-
-/*
- * -------------------------------------------------------------------
- *  CUSTOM CONFIG VALUES
- * -------------------------------------------------------------------
- *
- * The $assign_to_config array below will be passed dynamically to the
- * config class when initialized. This allows you to set custom config
- * items or override any default config values found in the config.php file.
- * This can be handy as it permits you to share one application between
- * multiple front controller files, with each file containing different
- * config values.
- *
- * Un-comment the $assign_to_config array below to use this feature
- */
-	// $assign_to_config['name_of_config_item'] = 'value of config item';
-
-
-
-// --------------------------------------------------------------------
-// END OF USER CONFIGURABLE SETTINGS.  DO NOT EDIT BELOW THIS LINE
-// --------------------------------------------------------------------
-
-/*
- * ---------------------------------------------------------------
- *  Resolve the system path for increased reliability
- * ---------------------------------------------------------------
- */
-
-	// Set the current directory correctly for CLI requests
-	if (defined('STDIN'))
-	{
-		chdir(dirname(__FILE__));
-	}
-
-	if (($_temp = realpath($system_path)) !== FALSE)
-	{
-		$system_path = $_temp.DIRECTORY_SEPARATOR;
-	}
-	else
-	{
-		// Ensure there's a trailing slash
-		$system_path = strtr(
-			rtrim($system_path, '/\\'),
-			'/\\',
-			DIRECTORY_SEPARATOR.DIRECTORY_SEPARATOR
-		).DIRECTORY_SEPARATOR;
-	}
-
-	// Is the system path correct?
-	if ( ! is_dir($system_path))
-	{
-		header('HTTP/1.1 503 Service Unavailable.', TRUE, 503);
-		echo 'Your system folder path does not appear to be set correctly. Please open the following file and correct this: '.pathinfo(__FILE__, PATHINFO_BASENAME);
-		exit(3); // EXIT_CONFIG
-	}
-
-/*
- * -------------------------------------------------------------------
- *  Now that we know the path, set the main path constants
- * -------------------------------------------------------------------
- */
-	// The name of THIS file
-	define('SELF', pathinfo(__FILE__, PATHINFO_BASENAME));
-
-	// Path to the system directory
-	define('BASEPATH', $system_path);
-
-	// Path to the front controller (this file) directory
-	define('FCPATH', dirname(__FILE__).DIRECTORY_SEPARATOR);
-
-	// Name of the "system" directory
-	define('SYSDIR', basename(BASEPATH));
-
-	// The path to the "application" directory
-	if (is_dir($application_folder))
-	{
-		if (($_temp = realpath($application_folder)) !== FALSE)
-		{
-			$application_folder = $_temp;
-		}
-		else
-		{
-			$application_folder = strtr(
-				rtrim($application_folder, '/\\'),
-				'/\\',
-				DIRECTORY_SEPARATOR.DIRECTORY_SEPARATOR
-			);
-		}
-	}
-	elseif (is_dir(BASEPATH.$application_folder.DIRECTORY_SEPARATOR))
-	{
-		$application_folder = BASEPATH.strtr(
-			trim($application_folder, '/\\'),
-			'/\\',
-			DIRECTORY_SEPARATOR.DIRECTORY_SEPARATOR
-		);
-	}
-	else
-	{
-		header('HTTP/1.1 503 Service Unavailable.', TRUE, 503);
-		echo 'Your application folder path does not appear to be set correctly. Please open the following file and correct this: '.SELF;
-		exit(3); // EXIT_CONFIG
-	}
-
-	define('APPPATH', $application_folder.DIRECTORY_SEPARATOR);
-
-	// The path to the "views" directory
-	if ( ! isset($view_folder[0]) && is_dir(APPPATH.'views'.DIRECTORY_SEPARATOR))
-	{
-		$view_folder = APPPATH.'views';
-	}
-	elseif (is_dir($view_folder))
-	{
-		if (($_temp = realpath($view_folder)) !== FALSE)
-		{
-			$view_folder = $_temp;
-		}
-		else
-		{
-			$view_folder = strtr(
-				rtrim($view_folder, '/\\'),
-				'/\\',
-				DIRECTORY_SEPARATOR.DIRECTORY_SEPARATOR
-			);
-		}
-	}
-	elseif (is_dir(APPPATH.$view_folder.DIRECTORY_SEPARATOR))
-	{
-		$view_folder = APPPATH.strtr(
-			trim($view_folder, '/\\'),
-			'/\\',
-			DIRECTORY_SEPARATOR.DIRECTORY_SEPARATOR
-		);
-	}
-	else
-	{
-		header('HTTP/1.1 503 Service Unavailable.', TRUE, 503);
-		echo 'Your view folder path does not appear to be set correctly. Please open the following file and correct this: '.SELF;
-		exit(3); // EXIT_CONFIG
-	}
-
-	define('VIEWPATH', $view_folder.DIRECTORY_SEPARATOR);
-
-/*
- * --------------------------------------------------------------------
- * LOAD THE BOOTSTRAP FILE
- * --------------------------------------------------------------------
- *
- * And away we go...
- */
-require_once BASEPATH.'core/CodeIgniter.php';
+<?php include 'pages/header.php' ?>
+<div class="main-panel">
+          <div class="content-wrapper">
+            <div class="row" id="proBanner">
+              <div class="col-12">
+                <span class="d-flex align-items-center purchase-popup">
+                  <p>Like what you see? Check out our premium version for more.</p>
+                  <a href="https://github.com/BootstrapDash/PurpleAdmin-Free-Admin-Template" target="_blank" class="btn ml-auto download-button">Download Free Version</a>
+                  <a href="https://www.bootstrapdash.com/product/purple-bootstrap-4-admin-template/" target="_blank" class="btn purchase-button">Upgrade To Pro</a>
+                  <i class="mdi mdi-close" id="bannerClose"></i>
+                </span>
+              </div>
+            </div>
+            <div class="page-header">
+              <h3 class="page-title">
+                <span class="page-title-icon bg-gradient-primary text-white mr-2">
+                  <i class="mdi mdi-home"></i>
+                </span> Dashboard </h3>
+              <nav aria-label="breadcrumb">
+                <ul class="breadcrumb">
+                  <li class="breadcrumb-item active" aria-current="page">
+                    <span></span>Overview <i class="mdi mdi-alert-circle-outline icon-sm text-primary align-middle"></i>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+            <div class="row">
+              <div class="col-md-4 stretch-card grid-margin">
+                <div class="card bg-gradient-danger card-img-holder text-white">
+                  <div class="card-body">
+                    <img src="assets/images/dashboard/circle.svg" class="card-img-absolute" alt="circle-image" />
+                    <h4 class="font-weight-normal mb-3">Weekly Sales <i class="mdi mdi-chart-line mdi-24px float-right"></i>
+                    </h4>
+                    <h2 class="mb-5">$ 15,0000</h2>
+                    <h6 class="card-text">Increased by 60%</h6>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4 stretch-card grid-margin">
+                <div class="card bg-gradient-info card-img-holder text-white">
+                  <div class="card-body">
+                    <img src="assets/images/dashboard/circle.svg" class="card-img-absolute" alt="circle-image" />
+                    <h4 class="font-weight-normal mb-3">Weekly Orders <i class="mdi mdi-bookmark-outline mdi-24px float-right"></i>
+                    </h4>
+                    <h2 class="mb-5">45,6334</h2>
+                    <h6 class="card-text">Decreased by 10%</h6>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4 stretch-card grid-margin">
+                <div class="card bg-gradient-success card-img-holder text-white">
+                  <div class="card-body">
+                    <img src="assets/images/dashboard/circle.svg" class="card-img-absolute" alt="circle-image" />
+                    <h4 class="font-weight-normal mb-3">Visitors Online <i class="mdi mdi-diamond mdi-24px float-right"></i>
+                    </h4>
+                    <h2 class="mb-5">95,5741</h2>
+                    <h6 class="card-text">Increased by 5%</h6>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-7 grid-margin stretch-card">
+                <div class="card">
+                  <div class="card-body">
+                    <div class="clearfix">
+                      <h4 class="card-title float-left">Visit And Sales Statistics</h4>
+                      <div id="visit-sale-chart-legend" class="rounded-legend legend-horizontal legend-top-right float-right"></div>
+                    </div>
+                    <canvas id="visit-sale-chart" class="mt-4"></canvas>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-5 grid-margin stretch-card">
+                <div class="card">
+                  <div class="card-body">
+                    <h4 class="card-title">Traffic Sources</h4>
+                    <canvas id="traffic-chart"></canvas>
+                    <div id="traffic-chart-legend" class="rounded-legend legend-vertical legend-bottom-left pt-4"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-12 grid-margin">
+                <div class="card">
+                  <div class="card-body">
+                    <h4 class="card-title">Recent Tickets</h4>
+                    <div class="table-responsive">
+                      <table class="table">
+                        <thead>
+                          <tr>
+                            <th> Assignee </th>
+                            <th> Subject </th>
+                            <th> Status </th>
+                            <th> Last Update </th>
+                            <th> Tracking ID </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>
+                              <img src="assets/images/faces/face1.jpg" class="mr-2" alt="image"> David Grey </td>
+                            <td> Fund is not recieved </td>
+                            <td>
+                              <label class="badge badge-gradient-success">DONE</label>
+                            </td>
+                            <td> Dec 5, 2017 </td>
+                            <td> WD-12345 </td>
+                          </tr>
+                          <tr>
+                            <td>
+                              <img src="assets/images/faces/face2.jpg" class="mr-2" alt="image"> Stella Johnson </td>
+                            <td> High loading time </td>
+                            <td>
+                              <label class="badge badge-gradient-warning">PROGRESS</label>
+                            </td>
+                            <td> Dec 12, 2017 </td>
+                            <td> WD-12346 </td>
+                          </tr>
+                          <tr>
+                            <td>
+                              <img src="assets/images/faces/face3.jpg" class="mr-2" alt="image"> Marina Michel </td>
+                            <td> Website down for one week </td>
+                            <td>
+                              <label class="badge badge-gradient-info">ON HOLD</label>
+                            </td>
+                            <td> Dec 16, 2017 </td>
+                            <td> WD-12347 </td>
+                          </tr>
+                          <tr>
+                            <td>
+                              <img src="assets/images/faces/face4.jpg" class="mr-2" alt="image"> John Doe </td>
+                            <td> Loosing control on server </td>
+                            <td>
+                              <label class="badge badge-gradient-danger">REJECTED</label>
+                            </td>
+                            <td> Dec 3, 2017 </td>
+                            <td> WD-12348 </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-12 grid-margin stretch-card">
+                <div class="card">
+                  <div class="card-body">
+                    <h4 class="card-title">Recent Updates</h4>
+                    <div class="d-flex">
+                      <div class="d-flex align-items-center mr-4 text-muted font-weight-light">
+                        <i class="mdi mdi-account-outline icon-sm mr-2"></i>
+                        <span>jack Menqu</span>
+                      </div>
+                      <div class="d-flex align-items-center text-muted font-weight-light">
+                        <i class="mdi mdi-clock icon-sm mr-2"></i>
+                        <span>October 3rd, 2018</span>
+                      </div>
+                    </div>
+                    <div class="row mt-3">
+                      <div class="col-6 pr-1">
+                        <img src="assets/images/dashboard/img_1.jpg" class="mb-2 mw-100 w-100 rounded" alt="image">
+                        <img src="assets/images/dashboard/img_4.jpg" class="mw-100 w-100 rounded" alt="image">
+                      </div>
+                      <div class="col-6 pl-1">
+                        <img src="assets/images/dashboard/img_2.jpg" class="mb-2 mw-100 w-100 rounded" alt="image">
+                        <img src="assets/images/dashboard/img_3.jpg" class="mw-100 w-100 rounded" alt="image">
+                      </div>
+                    </div>
+                    <div class="d-flex mt-5 align-items-top">
+                      <img src="assets/images/faces/face3.jpg" class="img-sm rounded-circle mr-3" alt="image">
+                      <div class="mb-0 flex-grow">
+                        <h5 class="mr-2 mb-2">School Website - Authentication Module.</h5>
+                        <p class="mb-0 font-weight-light">It is a long established fact that a reader will be distracted by the readable content of a page.</p>
+                      </div>
+                      <div class="ml-auto">
+                        <i class="mdi mdi-heart-outline text-muted"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-7 grid-margin stretch-card">
+                <div class="card">
+                  <div class="card-body">
+                    <h4 class="card-title">Project Status</h4>
+                    <div class="table-responsive">
+                      <table class="table">
+                        <thead>
+                          <tr>
+                            <th> # </th>
+                            <th> Name </th>
+                            <th> Due Date </th>
+                            <th> Progress </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td> 1 </td>
+                            <td> Herman Beck </td>
+                            <td> May 15, 2015 </td>
+                            <td>
+                              <div class="progress">
+                                <div class="progress-bar bg-gradient-success" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                              </div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td> 2 </td>
+                            <td> Messsy Adam </td>
+                            <td> Jul 01, 2015 </td>
+                            <td>
+                              <div class="progress">
+                                <div class="progress-bar bg-gradient-danger" role="progressbar" style="width: 75%" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+                              </div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td> 3 </td>
+                            <td> John Richards </td>
+                            <td> Apr 12, 2015 </td>
+                            <td>
+                              <div class="progress">
+                                <div class="progress-bar bg-gradient-warning" role="progressbar" style="width: 90%" aria-valuenow="90" aria-valuemin="0" aria-valuemax="100"></div>
+                              </div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td> 4 </td>
+                            <td> Peter Meggik </td>
+                            <td> May 15, 2015 </td>
+                            <td>
+                              <div class="progress">
+                                <div class="progress-bar bg-gradient-primary" role="progressbar" style="width: 50%" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
+                              </div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td> 5 </td>
+                            <td> Edward </td>
+                            <td> May 03, 2015 </td>
+                            <td>
+                              <div class="progress">
+                                <div class="progress-bar bg-gradient-danger" role="progressbar" style="width: 35%" aria-valuenow="35" aria-valuemin="0" aria-valuemax="100"></div>
+                              </div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td> 5 </td>
+                            <td> Ronald </td>
+                            <td> Jun 05, 2015 </td>
+                            <td>
+                              <div class="progress">
+                                <div class="progress-bar bg-gradient-info" role="progressbar" style="width: 65%" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100"></div>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-5 grid-margin stretch-card">
+                <div class="card">
+                  <div class="card-body">
+                    <h4 class="card-title text-white">Todo</h4>
+                    <div class="add-items d-flex">
+                      <input type="text" class="form-control todo-list-input" placeholder="What do you need to do today?">
+                      <button class="add btn btn-gradient-primary font-weight-bold todo-list-add-btn" id="add-task">Add</button>
+                    </div>
+                    <div class="list-wrapper">
+                      <ul class="d-flex flex-column-reverse todo-list todo-list-custom">
+                        <li>
+                          <div class="form-check">
+                            <label class="form-check-label">
+                              <input class="checkbox" type="checkbox"> Meeting with Alisa </label>
+                          </div>
+                          <i class="remove mdi mdi-close-circle-outline"></i>
+                        </li>
+                        <li class="completed">
+                          <div class="form-check">
+                            <label class="form-check-label">
+                              <input class="checkbox" type="checkbox" checked> Call John </label>
+                          </div>
+                          <i class="remove mdi mdi-close-circle-outline"></i>
+                        </li>
+                        <li>
+                          <div class="form-check">
+                            <label class="form-check-label">
+                              <input class="checkbox" type="checkbox"> Create invoice </label>
+                          </div>
+                          <i class="remove mdi mdi-close-circle-outline"></i>
+                        </li>
+                        <li>
+                          <div class="form-check">
+                            <label class="form-check-label">
+                              <input class="checkbox" type="checkbox"> Print Statements </label>
+                          </div>
+                          <i class="remove mdi mdi-close-circle-outline"></i>
+                        </li>
+                        <li class="completed">
+                          <div class="form-check">
+                            <label class="form-check-label">
+                              <input class="checkbox" type="checkbox" checked> Prepare for presentation </label>
+                          </div>
+                          <i class="remove mdi mdi-close-circle-outline"></i>
+                        </li>
+                        <li>
+                          <div class="form-check">
+                            <label class="form-check-label">
+                              <input class="checkbox" type="checkbox"> Pick up kids from school </label>
+                          </div>
+                          <i class="remove mdi mdi-close-circle-outline"></i>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- content-wrapper ends -->
+          <!-- partial:partials/_footer.html -->
+          <footer class="footer">
+            <div class="d-sm-flex justify-content-center justify-content-sm-between">
+              <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2017 <a href="https://www.bootstrapdash.com/" target="_blank">BootstrapDash</a>. All rights reserved.</span>
+              <span class="float-none float-sm-right d-block mt-1 mt-sm-0 text-center">Developed by <i class="mdi mdi-heart text-danger"></i> Denny Septian</span>
+            </div>
+          </footer>
+          <!-- partial -->
+        </div>
+<?php include 'pages/footer.php';
